@@ -1,40 +1,69 @@
 {
-  description = "NixOS configuration with zapret-discord-youtube";
+  description = "NixOS configuration with zapret, home-manager and niri";
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05"; # Укажите свою версию NixOS, но не ниже 25.11.
-    zapret-discord-youtube.url = "github:kartavkun/zapret-discord-youtube";
-  };
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
-  outputs = { self, nixpkgs, zapret-discord-youtube }: {
-    nixosConfigurations.nixos-vrn = nixpkgs.lib.nixosSystem { # <- Изменено здесь
-      system = "x86_64-linux";
-      modules = [
-        ./configuration.nix
+    niri = {
+      url = "github:sodiboo/niri-flake";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
-        zapret-discord-youtube.nixosModules.default
-        {
-          services.zapret-discord-youtube = {
-            enable = true;
-            config = "general (ALT12)";  # Или любой конфиг из папки configs (general, general(ALT), general (SIMPLE FAKE) и т.д.)
+    home-manager = {
+      url = "github:nix-community/home-manager/release-26.05";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
 
-            # Game Filter: "null" (отключен), "all" (TCP+UDP), "tcp" (только TCP), "udp" (только UDP)
-            gameFilter = "all";  # или "all", "tcp", "udp"
-
-            # Добавляем кастомные домены в list-general-user.txt
-            listGeneral = [ "example.com" "test.org" "mysite.net" ];
-
-            # Добавляем домены в list-exclude-user.txt (исключения)
-            listExclude = [ "ubisoft.com" "origin.com" ];
-
-            # Добавляем IP адреса в ipset-all.txt
-            ipsetAll = [ "192.168.1.0/24" "10.0.0.1" ];
-
-            # Добавляем IP адреса в ipset-exclude-user.txt (исключения)
-            ipsetExclude = [ "203.0.113.0/24" ];
-          };
-        }
-      ];
+    zapret-discord-youtube = {
+      url = "github:kartavkun/zapret-discord-youtube";
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
+
+  outputs = { self, nixpkgs, niri, home-manager, zapret-discord-youtube, ... }@inputs:
+    let
+      system = "x86_64-linux";
+      pkgs = import nixpkgs {
+        inherit system;
+        config.allowUnfree = true;
+      };
+    in {
+      nixosConfigurations.nixos-vrn = nixpkgs.lib.nixosSystem {
+        inherit system;
+        specialArgs = { inherit inputs; };
+        modules = [
+          ./hosts/nixos-vrn/configuration.nix
+          ./modules/core/default.nix
+          ./modules/hardware/default.nix
+          ./modules/desktop/default.nix
+          ./modules/users/default.nix
+
+          zapret-discord-youtube.nixosModules.default
+          {
+            services.zapret-discord-youtube = {
+              enable = true;
+              config = "general (ALT12)";
+              gameFilter = "all";
+              listGeneral = [ "example.com" "test.org" ];
+              listExclude = [ "ubisoft.com" ];
+              ipsetAll = [ "192.168.1.0/24" ];
+              ipsetExclude = [ "203.0.113.0/24" ];
+            };
+          }
+
+          {
+            services.openssh.enable = true;
+            networking.firewall.allowedTCPPorts = [ 22 ];
+          }
+
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.vrn = import ./home-manager/vrn.nix;
+            home-manager.extraSpecialArgs = { inherit inputs; };
+          }
+        ];
+      };
+    };
 }
