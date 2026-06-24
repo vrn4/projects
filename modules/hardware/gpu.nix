@@ -4,19 +4,9 @@
   # Поддержка OpenGL
   hardware.opengl = {
     enable = true;
-    driSupport = true;
     driSupport32Bit = true;
   };
-  
-  # Для AMD (radeon/amdgpu)
-  hardware.amdgpu = {
-    enable = true;
-    opencl = {
-      enable = true;
-      icd = true;
-    };
-  };
-  
+   
   # Для гибридной графики (если есть)
   # Если у тебя только AMD - закомментируй блок ниже
   /*

@@ -1,53 +1,77 @@
-{ config, lib, pkgs, inputs, ... }:
+
+{ config, pkgs, ... }:
 
 {
-  imports = [
-    ./hardware.nix
-  ];
+	imports = [
+		./hardware-configuration.nix
+	];
 
-  # Имя хоста
-  networking.hostName = "nixos-vrn";
-  
-  # Сеть
-  networking.networkmanager.enable = true;
-  
-  # Загрузчик
-  boot.loader = {
-    systemd-boot.enable = true;
-    efi.canTouchEfiVariables = true;
-  };
-  
-  # Включаем Niri
-  my.desktop.niri.enable = true;
-  
-  # Базовая конфигурация Niri
-  my.desktop.niri.extraConfig = ''
-    binds {
-      Mod { super }
-      Mod+Shift { super shift }
-      
-      "Mod T" { spawn "alacritty"; }
-      "Mod D" { spawn "fuzzel"; }
-      "Mod Q" { close-window; }
-      "Mod S" { spawn "firefox"; }
-      
-      "Mod 1" { focus-workspace 0; }
-      "Mod 2" { focus-workspace 1; }
-      "Mod 3" { focus-workspace 2; }
-      "Mod 4" { focus-workspace 3; }
-      
-      "Mod Shift 1" { move-column-to-workspace 0; }
-      "Mod Shift 2" { move-column-to-workspace 1; }
-      "Mod Shift 3" { move-column-to-workspace 2; }
-      "Mod Shift 4" { move-column-to-workspace 3; }
-    }
-    
-    environment_variables {
-      XDG_SESSION_TYPE = "wayland";
-      XDG_CURRENT_DESKTOP = "niri";
-    }
-  '';
-  
-  # Системный уровень
-  system.stateVersion = "24.11";
+	boot.loader.systemd-boot.enable = true;
+	boot.loader.efi.canTouchEfiVariables = true;
+	boot.kernel.sysctl = {
+		"net.ipv6.conf.all.disable_ipv6" = 1;
+		"net.ipv6.conf.default.disable_ipv6" = 1;
+	};
+
+	networking.hostName = "nixos-vrn";
+        services.dnsmasq.enable = true;
+	networking.networkmanager.enable = true;
+
+	services.printing = {
+		enable = true;
+		drivers = [
+			pkgs.gutenprint
+			pkgs.hplip
+			pkgs.hplipWithPlugin
+			pkgs.samsung-unified-linux-driver
+		];
+	};
+
+	services.displayManager.sddm = {
+		enable = true;
+		wayland.enable = true;
+		autologin = {
+			enable = true;
+			user = "vrn";
+			session = "plasma";
+		};
+	};
+	services.desktopManager.plasma6.enable = true;
+
+	services.xserver.xkb = {
+		layout = "us,ru";
+		variant = "";
+		options = "grp:alt_shift_toggle";
+	};
+
+	services.pipewire = {
+		enable = true;
+		alsa.enable = true;
+		alsa.support32Bit = true;
+		pulse.enable = true;
+	};
+
+	nixpkgs.config.allowUnfree = true;
+	services.xserver.videoDrivers = [ "nvidia" ];
+	hardware.graphics = {
+		enable = true;
+		enable32Bit = true;
+	};
+	hardware.nvidia = {
+		modesetting.enable = true;
+		open = false;
+		nvidiaSettings = true;
+		powerManagement.enable = true;
+	};
+
+	services.flatpak.enable = true;
+	environment.systemPackages = with pkgs; [
+		git
+		curl
+		wget
+		alacritty
+		libsForQt5.kde-gtk-config
+ 		niri
+	];
+	system.stateVersion = "26.05";
 }

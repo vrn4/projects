@@ -4,11 +4,6 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
 
-    niri = {
-      url = "github:sodiboo/niri-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -20,7 +15,7 @@
     };
   };
 
-  outputs = { self, nixpkgs, niri, home-manager, zapret-discord-youtube, ... }@inputs:
+  outputs = { self, nixpkgs, home-manager, zapret-discord-youtube, ... }@inputs:
     let
       system = "x86_64-linux";
       pkgs = import nixpkgs {
