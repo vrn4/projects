@@ -2,10 +2,18 @@
 
 {
   # Поддержка OpenGL
-  hardware.opengl = {
-    enable = true;
-    driSupport32Bit = true;
-  };
+	hardware.graphics = {
+		enable = true;
+		enable32Bit = true;
+	};
+	services.xserver.videoDrivers = [ "nvidia" ];
+        hardware.nvidia = {
+                modesetting.enable = true;
+                open = false;
+                nvidiaSettings = true;
+                powerManagement.enable = true;
+        };
+ 
    
   # Для гибридной графики (если есть)
   # Если у тебя только AMD - закомментируй блок ниже

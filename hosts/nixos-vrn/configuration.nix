@@ -26,16 +26,17 @@
 			pkgs.samsung-unified-linux-driver
 		];
 	};
-
 	services.displayManager.sddm = {
 		enable = true;
 		wayland.enable = true;
-		autologin = {
+	};	
+	services.displayManager.autoLogin = {
 			enable = true;
 			user = "vrn";
-			session = "plasma";
-		};
 	};
+
+	services.displayManager.defaultSession = "plasma";
+
 	services.desktopManager.plasma6.enable = true;
 
 	services.xserver.xkb = {
@@ -52,17 +53,6 @@
 	};
 
 	nixpkgs.config.allowUnfree = true;
-	services.xserver.videoDrivers = [ "nvidia" ];
-	hardware.graphics = {
-		enable = true;
-		enable32Bit = true;
-	};
-	hardware.nvidia = {
-		modesetting.enable = true;
-		open = false;
-		nvidiaSettings = true;
-		powerManagement.enable = true;
-	};
 
 	services.flatpak.enable = true;
 	environment.systemPackages = with pkgs; [
@@ -70,7 +60,6 @@
 		curl
 		wget
 		alacritty
-		libsForQt5.kde-gtk-config
  		niri
 	];
 	system.stateVersion = "26.05";
